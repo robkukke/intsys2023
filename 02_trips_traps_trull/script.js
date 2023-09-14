@@ -1,7 +1,11 @@
-let initialState = "3N";
+/* Koostage näite põhjal leht trips-traps-trulli mängimiseks.
+   Algseis võiks olla kujul
+   _________X
+   st. alakriips tähistab tühja ruutu, O või X ruudus olevat sümbolit.
+   Viimane (kümnes) sümbol näitab, kelle kord on käia. */
+
+let initialState = "_________X";
 let currentState = initialState;
-const boardLength = 7;
-const allowedMoves = [1, 2];
 const currentLayer = document.getElementById("currentLayer");
 const selectionLayer = document.getElementById("selectionLayer");
 
@@ -11,34 +15,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function getSubStates(state) {
     const player = state.slice(-1);
-    const space = parseInt(state.slice(0, -1));
-    const opponent = (player === "X") ? "N" : "X";
+    const opponent = (player === "X") ? "O" : "X";
+    const subStates = [];
 
-    return allowedMoves
-        .map(move => move + space)
-        .filter(space => space <= boardLength)
-        .map(space => space + opponent);
+    for (let space = 0; space < 9; space++) {
+        if (state[space] === "_") {
+            const subState = state.slice(0, space) + player + state.slice(space + 1, 9) + opponent;
+
+            subStates.push(subState);
+        }
+    }
+
+    return subStates;
 }
 
 function stateToString(state) {
-    const player = state.slice(-1);
-    const space = parseInt(state.slice(0, -1));
-    const underscores = Array(boardLength).fill("_");
-
-    underscores[space - 1] = player;
-
-    return underscores.join(" ");
+    return state.match(/.{3}/g).join("<br>");
 }
 
 function displayStates() {
-    currentLayer.innerText = stateToString(currentState);
+    currentLayer.innerHTML = stateToString(currentState);
 
     displaySubStates();
 }
 
 function displaySubStates() {
     const subStates = getSubStates(currentState).map(subState => {
-        return `${stateToString(subState)} <input type='button' value='Vali' data-substate='${subState}' />`;
+        return `${stateToString(subState)} <br><br> <input type='button' value='Vali' data-substate='${subState}' />`;
     });
 
     selectionLayer.innerHTML = subStates.join("<br><br>");
