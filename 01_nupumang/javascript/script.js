@@ -1,17 +1,23 @@
-let initialState = "3N";
-let currentState = initialState;
+let currentGameState = "3N";
 const boardLength = 7;
 const allowedMoves = [1, 2];
 const currentLayer = document.getElementById("currentLayer");
 const selectionLayer = document.getElementById("selectionLayer");
+const treeLayer = document.getElementById("treeLayer");
 
 document.addEventListener("DOMContentLoaded", () => {
-    displayStates();
+    displayGameState();
 });
 
-function getSubStates(state) {
+function getPlayerAndSpace(state) {
     const player = state.slice(-1);
     const space = parseInt(state.slice(0, -1));
+
+    return {player, space};
+}
+
+function getValidNextStates(state) {
+    const {player, space} = getPlayerAndSpace(state);
     const opponent = (player === "X") ? "N" : "X";
 
     return allowedMoves
@@ -21,8 +27,7 @@ function getSubStates(state) {
 }
 
 function stateToString(state) {
-    const player = state.slice(-1);
-    const space = parseInt(state.slice(0, -1));
+    const {player, space} = getPlayerAndSpace(state);
     const underscores = Array(boardLength).fill("_");
 
     underscores[space - 1] = player;
@@ -30,32 +35,44 @@ function stateToString(state) {
     return underscores.join(" ");
 }
 
-function displayStates() {
-    currentLayer.innerText = stateToString(currentState);
+function generateStateTree(state) {
+    const validNextStates = getValidNextStates(state);
 
-    displaySubStates();
+    return `<ul>${validNextStates.map(
+        nextState => `<li>${stateToString(nextState)}${generateStateTree(nextState)}</li>`).join("\n")}</ul>`;
 }
 
-function displaySubStates() {
-    const subStates = getSubStates(currentState).map(subState => {
-        return `${stateToString(subState)} <input type='button' value='Vali' data-substate='${subState}' />`;
+function displayGameState() {
+    currentLayer.innerText = stateToString(currentGameState);
+
+    displayValidNextStates();
+    displayStateTree();
+}
+
+function displayValidNextStates() {
+    const validNextStates = getValidNextStates(currentGameState).map(nextState => {
+        return `${stateToString(nextState)} <input type='button' value='Vali' data-nextstate='${nextState}' />`;
     });
 
-    selectionLayer.innerHTML = subStates.join("<br><br>");
+    selectionLayer.innerHTML = validNextStates.join("<br><br>");
 
     const buttons = selectionLayer.querySelectorAll("input[type='button']");
 
     buttons.forEach(button => {
         button.addEventListener("click", () => {
-            const subState = button.getAttribute("data-substate");
+            const nextState = button.getAttribute("data-nextstate");
 
-            selectState(subState);
+            selectState(nextState);
         });
     });
 }
 
-function selectState(newState) {
-    currentState = newState;
+function displayStateTree() {
+    treeLayer.innerHTML = generateStateTree(currentGameState);
+}
 
-    displayStates();
+function selectState(newState) {
+    currentGameState = newState;
+
+    displayGameState();
 }
