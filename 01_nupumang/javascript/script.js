@@ -51,7 +51,7 @@ function displayGameState() {
 
 function displayValidNextStates() {
     const validNextStates = getValidNextStates(currentGameState).map(nextState => {
-        return `${stateToString(nextState)} <input type='button' value='Vali' data-nextstate='${nextState}' />`;
+        return `${stateToString(nextState)}<input type='button' value='Vali' data-nextstate='${nextState}' />`;
     });
 
     selectionLayer.innerHTML = validNextStates.join("<br><br>");
