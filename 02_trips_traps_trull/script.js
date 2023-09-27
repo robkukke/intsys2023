@@ -4,10 +4,9 @@
    st. alakriips tähistab tühja ruutu, O või X ruudus olevat sümbolit.
    Viimane (kümnes) sümbol näitab, kelle kord on käia. */
 
-let currentGameState = "XO_OX_X__X";
+let currentGameState = "XO_O_OXO_X";
 const currentLayer = document.getElementById("currentLayer");
 const selectionLayer = document.getElementById("selectionLayer");
-const treeLayer = document.getElementById("treeLayer");
 
 document.addEventListener("DOMContentLoaded", () => {
     displayGameState();
@@ -20,7 +19,7 @@ function getValidNextStates(state) {
 
     for (let space = 0; space < 9; space++) {
         if (state[space] === "_") {
-            const nextState = state.slice(0, space) + player + state.slice(space + 1, 9) + opponent;
+            const nextState = `${state.slice(0, space)}${player}${state.slice(space + 1, 9)}${opponent}`;
 
             validNextStates.push(nextState);
         }
@@ -47,53 +46,45 @@ function checkForWinner(state) {
     return false;
 }
 
-function generateStateTree(state, isTopNode = true) {
+function generateStateTree(state) {
     const winner = checkForWinner(state);
     const validNextStates = getValidNextStates(state);
 
-    if (isTopNode) {
-        return `<ul>${validNextStates.map(nextState => generateStateTree(nextState, false)).join('')}</ul>`;
-    }
-
     if (winner) {
-        return `<li>${stateToString(state)}<br>Võitis ${winner}</li>`;
+        return winner === "X" ? 1 : -1;
     }
 
-    if (validNextStates.length === 0) {
-        return `<li>${stateToString(state)}<br>Viik</li>`;
+    if (validNextStates.length > 0) {
+        const ratings = validNextStates.map(nextState => generateStateTree(nextState));
+        return state[9] === "X" ? Math.max(...ratings) : Math.min(...ratings);
     }
 
-    return `<li>${stateToString(state)}<ul>${validNextStates.map(nextState => generateStateTree(nextState, false))
-        .join('')}</ul></li>`;
+    return 0;
 }
 
 function displayGameState() {
     currentLayer.innerHTML = stateToString(currentGameState);
 
     displayValidNextStates();
-    displayStateTree();
 }
 
 function displayValidNextStates() {
-    const validNextStates = getValidNextStates(currentGameState).map(nextState => {
-        return `${stateToString(nextState)}<br><br><input type='button' value='Vali' data-nextstate='${nextState}' />`;
-    });
+    const validNextStates = getValidNextStates(currentGameState).map(nextState => ({
+        state: nextState, rating: generateStateTree(nextState)
+    }));
 
-    selectionLayer.innerHTML = validNextStates.join("<br><br>");
+    validNextStates.sort((state1, state2) => state1.rating - state2.rating);
+
+    selectionLayer.innerHTML = validNextStates
+        .map(nextState => `<br><br>${stateToString(nextState.state)}<br>Hinnang: ${nextState.rating}
+            <br><br><input type='button' value='Vali' data-nextstate="${nextState.state}" />`)
+        .join("<br><br");
 
     const buttons = selectionLayer.querySelectorAll("input[type='button']");
 
     buttons.forEach(button => {
-        button.addEventListener("click", () => {
-            const nextState = button.getAttribute("data-nextstate");
-
-            selectState(nextState);
-        });
+        button.addEventListener("click", () => selectState(button.getAttribute("data-nextstate")));
     });
-}
-
-function displayStateTree() {
-    treeLayer.innerHTML = generateStateTree(currentGameState);
 }
 
 function selectState(newState) {
