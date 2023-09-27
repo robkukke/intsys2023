@@ -59,11 +59,7 @@ function displayValidNextStates() {
     const buttons = selectionLayer.querySelectorAll("input[type='button']");
 
     buttons.forEach(button => {
-        button.addEventListener("click", () => {
-            const nextState = button.getAttribute("data-nextstate");
-
-            selectState(nextState);
-        });
+        button.addEventListener("click", () => selectState(button.getAttribute("data-nextstate")));
     });
 }
 
